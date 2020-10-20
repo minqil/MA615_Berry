@@ -1,9 +1,49 @@
+---
+title: "Data Analysis for Strawberries"
+author: "Minqi Li"
+date: "10/20/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
 library(knitr)
 library(tidyverse)
 library(magrittr)
 library(kableExtra)
 library(ggplot2)
 
+opts_chunk$set(echo = FALSE, 
+               warning = FALSE,
+               message = FALSE)
+```
+
+
+# 1 Introduction
+## 1.1 Overview
+These data were collected from the USDA database selector: <a href="https://quickstats.nass.usda.gov">https://quickstats.nass.usda.gov</a>. We select each variable and get the dataset. This dataset is about the information of three kinds of berries: blueberries, strawberries and raspberries. This report only analyzes the data of strawberries.
+
+## 1.2 Outline
+The outline of this report is as follows. Firstly, I read and clean the data. Next, I visualize and explore the data. Finally, I interpret my model and discuss the conclusions.
+
+# 2 Data Cleaning
+First of all, I read the data and the data is complicate.
+Then we follow these steps to clean the data.
+
+* Remove the columns with only one unique value.
+
+* Separate the data of strawberries into an individual table.
+
+* Separate the column of data item, domain, domain category into the column of type, production, Avg, Measures, Materials, Chemical.
+
+* Remove redundant columns and rearrange all the columns.
+
+* Deal with the value column to transform (NA), (D), (Z) into 0 and convert character data to numeric.
+
+\newpage
+# 3 Visualization
+## 3.1 Explore the Relationship between State and Value
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE, results="hide"}
 # read the data
 ag_data <- read_csv("berries.csv", col_names = TRUE)
 
@@ -234,7 +274,7 @@ sberry1$Value[sberry1$Value=="(NA)"]=0
 sberry1$Value[sberry1$Value=="(Z)"]=0
 sberry1$Value<-as.numeric(sberry1$Value)
 
-write.csv(sberry1,file = "sberry1.csv",row.names = F)
+#write.csv(sberry1,file = "sberry1.csv",row.names = F)
 
 
 
@@ -248,40 +288,41 @@ measure_mean_state<-sberry1%>%
   summarize(
     val1=mean(Value,na.rm=TRUE)
   )
+```
 
-#measure_mean_state1<- pivot_wider(data=measure_mean_state,names_from =Year, values_from = val1)
-#measure_mean_state1[is.na(measure_mean_state1)] <-0
-
-#measure_mean_state2<-filter(measure_mean_state,Measures=="MEASURED IN CWT")
-
+```{r,echo=FALSE, message=FALSE, warning=FALSE,fig.width=6, fig.cap="Plot the histogram with the value measured in $ for each state and each year."}
 ###MEASURED IN $
 measure_mean_state_mea1<-filter(measure_mean_state,Measures=="MEASURED IN $")
 ggplot(data=measure_mean_state_mea1)+
   geom_bar(
     mapping=aes(x=State,y=val1,fill=Year),stat = "identity", position = position_dodge(0.5))+
   ggtitle("MEASURED IN $")+
-  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=5),plot.title = element_text(hjust = 0.5))
+  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=8),plot.title = element_text(hjust = 0.5))
 
-###MEASURED IN CWT
+```
+
+```{r,echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.cap="Plot the histogram with the value measured in CWT for each state and each year."}
 measure_mean_state_mea2<-filter(measure_mean_state,Measures=="MEASURED IN CWT")
 ggplot(data=measure_mean_state_mea2)+
   geom_bar(
     mapping=aes(x=State,y=val1,fill=Year),stat = "identity", position = position_dodge(0.5))+
   ggtitle("MEASURED IN CWT")+
-  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=5),plot.title = element_text(hjust = 0.5))
+  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=8),plot.title = element_text(hjust = 0.5))
+```
 
-
-###MEASURED IN CWT / ACRE
+```{r,echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.cap="Plot the histogram with the value measured in CWT/ACRE for each state and each year."}
 measure_mean_state_mea3<-filter(measure_mean_state,Measures=="MEASURED IN CWT / ACRE")
 ggplot(data=measure_mean_state_mea3)+
   geom_bar(
     mapping=aes(x=State,y=val1,fill=Year),stat = "identity", position = position_dodge(0.5))+
   ggtitle("MEASURED IN CWT/ACRE")+
-  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=5),plot.title = element_text(hjust = 0.5))
+  theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=8),plot.title = element_text(hjust = 0.5))
+```
 
+\newpage
+## 3.2 Explore the Relationship between Chemical and Value
 
-
-##explore the relationship between chemical and value
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', fig.height=8, fig.width=8, fig.cap="Boxplots separated for each measures."}
 measure_chemcial<-sberry1 %>% select(Measures, Year, Chemical, Value)
 measure_chemcial %<>% filter(Chemical!="")
 
@@ -290,29 +331,43 @@ ggplot(data=measure_chemcial)+
   theme(axis.text.x = element_text(angle = 70, hjust = 0.5,vjust = 0.5,color = "black",size=8))+
   facet_wrap(~ Measures,nrow=2)+
   ylim(0,2e+06)
-  
-  
-## explore the relationship between type and value
+```
+
+\newpage
+## 3.3 Explore the Relationship between Type and Value
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center', fig.height=8, fig.width=10, fig.cap="Boxplots separated for each measures."}
 measure_type<-sberry1 %>% select(Measures,type, Value)
 
 ggplot(data=measure_type)+
   geom_boxplot(mapping = aes(x=type,y=Value))+
   facet_wrap(~ Measures,nrow=2)+
   ylim(0,500000)
+```
 
+\newpage
+# 4 Discussion
 
+* From the figure 1, 2 and 3, we can conclude that California's strawberries have the highest price, the largest weight and the biggest density which increase by year, and Florida's strawberries take the second place. Therefore, California and Florida are more suitable for the growth of strawberries than other states in United states.
 
+* Based on the figure 4, potash fertilizer has the biggest influence on facilitating the growth of strawberries, and nitrogen fertilizer and phosphate fertilizer take the second and third place respectively.
 
-        
-        
-        
-  
+* From the figure 5, we can conclude that adding chemical materials during growing process has little influence on the growth of strawberries.
 
+# 5 Weakness
 
+Because of time constraints, I cannot clean data in more details such as transforming the value of (D) and (NA) into the mean of all the value with each measures. Besides, I should do more data analysis such PCA.
 
+\newpage
+# References
 
+1. Baptiste Auguie (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
 
+2. Hao Zhu (2020). kableExtra: Construct Complex Table with 'kable' and Pipe Syntax. R package version 1.2.1. https://CRAN.R-project.org/package=kableExtra
 
+3. Yihui Xie (2020). knitr: A General-Purpose Package for Dynamic Report Generation in R. R package version 1.29.
+
+4. I appreciate Lin Zhou and Jinzhe Zhang's help.
 
 
 
